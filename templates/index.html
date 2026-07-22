@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de Documentos · El Grupo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef2f7;
+      color: #2c2c2c;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1F3864 0%, #2a5298 100%);
+      color: white;
+      padding: 28px 24px 24px;
+      text-align: center;
+    }
+    .header h1 { font-size: 22px; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .header p  { font-size: 13px; opacity: 0.75; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 860px;
+      margin: 32px auto 60px;
+      padding: 0 20px;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: #1F3864;
+      color: #fff;
+      padding: 13px 20px;
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-header .num {
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; flex-shrink: 0;
+    }
+    .card-body { padding: 20px; }
+
+    /* ── Selector tipo de documento ── */
+    .tipo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+    .tipo-opt { display: none; }
+    .tipo-lbl {
+      display: block;
+      border: 2px solid #dde3ec;
+      border-radius: 8px;
+      padding: 18px 12px;
+      cursor: pointer;
+      transition: all .18s;
+      text-align: center;
+    }
+    .tipo-lbl:hover { border-color: #2a5298; background: #f4f7fc; }
+    .tipo-opt:checked + .tipo-lbl {
+      border-color: #1F3864;
+      background: #dce8f8;
+    }
+    .tipo-lbl .tipo-icon  { font-size: 28px; display: block; margin-bottom: 8px; }
+    .tipo-lbl .tipo-name  { font-weight: bold; font-size: 13px; color: #1F3864; line-height: 1.3; }
+    .tipo-lbl .tipo-desc  { font-size: 11px; color: #888; margin-top: 4px; line-height: 1.4; }
+
+    /* ── Empresa selector ── */
+    .empresa-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .empresa-opt { display: none; }
+    .empresa-lbl {
+      display: block;
+      border: 2px solid #dde3ec;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all .18s;
+      text-align: center;
+    }
+    .empresa-lbl:hover { border-color: #2a5298; background: #f4f7fc; }
+    .empresa-opt:checked + .empresa-lbl {
+      border-color: #1F3864;
+      background: #dce8f8;
+    }
+    .empresa-lbl .nombre { font-weight: bold; font-size: 15px; color: #1F3864; }
+    .empresa-lbl .nit    { font-size: 12px; color: #777; margin-top: 4px; }
+
+    /* ── Secciones de formulario ── */
+    .form-section { display: none; }
+    .form-section.visible { display: block; }
+
+    /* ── Form fields ── */
+    .row   { display: grid; gap: 14px; }
+    .col-2 { grid-template-columns: 1fr 1fr; }
+    .col-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 12px;
+      font-weight: bold;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .field label .req { color: #c0392b; margin-left: 2px; }
+    .field input,
+    .field select,
+    .field textarea {
+      padding: 9px 12px;
+      border: 1px solid #d0d7e3;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      background: #fafbfd;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      outline: none;
+      border-color: #2a5298;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(42,82,152,0.12);
+    }
+    .field textarea { resize: vertical; min-height: 72px; }
+    .field .hint    { font-size: 11px; color: #999; font-style: italic; }
+
+    /* ── Actividades ── */
+    #actividades-lista { display: flex; flex-direction: column; gap: 8px; }
+    .actividad-fila    { display: flex; gap: 8px; align-items: center; }
+    .actividad-fila input { flex: 1; }
+    .btn-quitar {
+      background: none; border: none;
+      color: #bbb; font-size: 20px;
+      cursor: pointer; line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .btn-quitar:hover { color: #c0392b; }
+    .btn-agregar {
+      margin-top: 10px;
+      background: none;
+      border: 1px dashed #2a5298;
+      color: #2a5298;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background .15s;
+    }
+    .btn-agregar:hover { background: #f0f5ff; }
+
+    /* ── Nota contratista ── */
+    .nota-contratista {
+      background: #f4f7fc;
+      border-left: 4px solid #1F3864;
+      border-radius: 0 6px 6px 0;
+      padding: 11px 16px;
+      font-size: 13px;
+      color: #444;
+      line-height: 1.6;
+    }
+    .nota-contratista strong { color: #1F3864; }
+
+    /* ── Separador de sección ── */
+    .section-gap { height: 0; }
+
+    /* ── Botón generar ── */
+    .btn-generar {
+      width: 100%;
+      background: linear-gradient(135deg, #1F3864, #2a5298);
+      color: #fff;
+      border: none;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity .2s, transform .1s;
+      margin-top: 4px;
+    }
+    .btn-generar:hover   { opacity: .92; transform: translateY(-1px); }
+    .btn-generar:active  { transform: translateY(0); }
+    .btn-generar:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+    /* ── Estados feedback ── */
+    .status {
+      display: none;
+      text-align: center;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+    .status.loading {
+      display: block;
+      background: #eef2f7;
+      color: #1F3864;
+    }
+    .status.error {
+      display: block;
+      background: #fdf0f0;
+      color: #c0392b;
+      border: 1px solid #f5c6c6;
+    }
+    .status.success {
+      display: block;
+      background: #eafaf1;
+      color: #1e8449;
+      border: 1px solid #a9dfbf;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .col-2, .col-3, .empresa-grid, .tipo-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📄 Generador de Documentos</h1>
+  <p>Fiera S.A.S. · Pérez y Villa S.A.S.</p>
+</div>
+
+<div class="container">
+<form id="form-principal">
+
+  <!-- ══ 1. Tipo de documento ════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-header"><span class="num">1</span> ¿Qué documento deseas crear?</div>
+    <div class="card-body">
+      <div class="tipo-grid">
+
+        <div>
+          <input class="tipo-opt" type="radio" name="tipo" id="tipo-proveedor" value="proveedor">
+          <label class="tipo-lbl" for="tipo-proveedor">
+            <span class="tipo-icon">🤝</span>
+            <div class="tipo-name">Contrato<br>Proveedor</div>
+            <div class="tipo-desc">Prestación de servicios a empresa contratante</div>
+          </label>
+        </div>
+
+        <div>
+          <input class="tipo-opt" type="radio" name="tipo" id="tipo-freefan" value="freefan">
+          <label class="tipo-lbl" for="tipo-freefan">
+            <span class="tipo-icon">🎯</span>
+            <div class="tipo-name">Contrato<br>Freefan</div>
+            <div class="tipo-desc">Contrato de servicios bajo formato Freefan</div>
+          </label>
+        </div>
+
+        <div>
+          <input class="tipo-opt" type="radio" name="tipo" id="tipo-acta" value="acta_cierre">
+          <label class="tipo-lbl" for="tipo-acta">
+            <span class="tipo-icon">📋</span>
+            <div class="tipo-name">Acta de Cierre<br>y Terminación</div>
+            <div class="tipo-desc">Acta de finalización de contrato Freefan</div>
+          </label>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 2. Razón social del contratista ════════════════════════════ -->
+  <div class="card" id="card-empresa" style="display:none;">
+    <div class="card-header"><span class="num">2</span> Razón Social del Contratista</div>
+    <div class="card-body">
+      <div class="empresa-grid">
+
+        <div>
+          <input class="empresa-opt" type="radio" name="empresa" id="emp-fiera" value="fiera">
+          <label class="empresa-lbl" for="emp-fiera">
+            <div class="nombre">FIERA S.A.S.</div>
+            <div class="nit">NIT 900.072.392-5</div>
+          </label>
+        </div>
+
+        <div>
+          <input class="empresa-opt" type="radio" name="empresa" id="emp-pv" value="perez_villa">
+          <label class="empresa-lbl" for="emp-pv">
+            <div class="nombre">PÉREZ Y VILLA S.A.S.</div>
+            <div class="nit">NIT 890.926.395-8</div>
+          </label>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SECCIÓN A — CONTRATO PROVEEDOR
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="form-section" id="seccion-proveedor">
+
+    <!-- A3. Datos del contratante -->
+    <div class="card">
+      <div class="card-header"><span class="num">3</span> Datos del Contratante</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="field">
+          <label>Nombre de la empresa <span class="req">*</span></label>
+          <input type="text" name="empresa_contratante" placeholder="Ej: INNOVATECH S.A.S.">
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Representante Legal <span class="req">*</span></label>
+            <input type="text" name="nombre_rl" placeholder="Nombre completo">
+          </div>
+          <div class="field">
+            <label>Cédula del RL <span class="req">*</span></label>
+            <input type="text" name="cedula_rl" placeholder="Ej: 71.234.567">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Dirección</label>
+            <input type="text" name="direccion" placeholder="Calle, carrera, ciudad">
+          </div>
+          <div class="field">
+            <label>NIT <span class="req">*</span></label>
+            <input type="text" name="nit" placeholder="Ej: 900.123.456-7">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- A4. Contacto -->
+    <div class="card">
+      <div class="card-header"><span class="num">4</span> Contacto del Contratante</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="field">
+          <label>Nombre del contacto</label>
+          <input type="text" name="contacto_nombre" placeholder="Persona de contacto en la empresa cliente">
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Teléfono</label>
+            <input type="text" name="contacto_telefono" placeholder="Ej: 300 000 0000">
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <input type="email" name="contacto_correo" placeholder="contacto@empresa.com">
+          </div>
+        </div>
+
+        <div class="nota-contratista">
+          <strong>Contratista (fijo):</strong> Santiago Vélez Gracián ·
+          3154719586 · info@elgrupo.com.co
+        </div>
+
+      </div>
+    </div>
+
+    <!-- A5. Alcance -->
+    <div class="card">
+      <div class="card-header"><span class="num">5</span> Alcance del Servicio</div>
+      <div class="card-body">
+        <div id="actividades-lista">
+          <div class="actividad-fila">
+            <input type="text" name="actividades" placeholder="Actividad o entregable 1">
+            <button type="button" class="btn-quitar" onclick="quitarActividad(this)">×</button>
+          </div>
+          <div class="actividad-fila">
+            <input type="text" name="actividades" placeholder="Actividad o entregable 2">
+            <button type="button" class="btn-quitar" onclick="quitarActividad(this)">×</button>
+          </div>
+        </div>
+        <button type="button" class="btn-agregar" onclick="agregarActividad()">+ Agregar actividad</button>
+      </div>
+    </div>
+
+    <!-- A6. Duración -->
+    <div class="card">
+      <div class="card-header"><span class="num">6</span> Duración del Contrato</div>
+      <div class="card-body">
+        <div class="row col-3">
+          <div class="field">
+            <label>Cantidad <span class="req">*</span></label>
+            <input type="number" name="duracion_cantidad" placeholder="Ej: 12" min="1">
+          </div>
+          <div class="field">
+            <label>Unidad</label>
+            <select name="duracion_unidad">
+              <option value="meses">Meses</option>
+              <option value="años">Años</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha de inicio <span class="req">*</span></label>
+            <input type="text" name="fecha_inicio" placeholder="Ej: 1 de abril de 2026">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- A7. Valor y pago -->
+    <div class="card">
+      <div class="card-header"><span class="num">7</span> Valor y Forma de Pago</div>
+      <div class="card-body">
+        <div class="field">
+          <label>Descripción del valor y periodicidad <span class="req">*</span></label>
+          <textarea name="valor_pago"
+            placeholder="Ej: $120.000.000 (ciento veinte millones), pagaderos en cuotas mensuales de $10.000.000"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- A8. Fecha de firma -->
+    <div class="card">
+      <div class="card-header"><span class="num">8</span> Fecha de Firma</div>
+      <div class="card-body">
+        <div class="row col-3">
+          <div class="field">
+            <label>Día <span class="req">*</span></label>
+            <input type="number" name="firma_dia" placeholder="Ej: 9" min="1" max="31">
+          </div>
+          <div class="field">
+            <label>Mes <span class="req">*</span></label>
+            <select name="firma_mes">
+              <option value="">— Seleccionar —</option>
+              <option>enero</option><option>febrero</option>
+              <option>marzo</option><option>abril</option>
+              <option>mayo</option><option>junio</option>
+              <option>julio</option><option>agosto</option>
+              <option>septiembre</option><option>octubre</option>
+              <option>noviembre</option><option>diciembre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Año (2 dígitos) <span class="req">*</span></label>
+            <input type="text" name="firma_anio" placeholder="Ej: 26" maxlength="2">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /seccion-proveedor -->
+
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SECCIÓN B — CONTRATO FREEFAN
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="form-section" id="seccion-freefan">
+
+    <!-- B3. Datos del contrato -->
+    <div class="card">
+      <div class="card-header"><span class="num">3</span> Datos del Contrato Freefan</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Nombre del contratista <span class="req">*</span></label>
+            <input type="text" name="ff_contratista_nombre" placeholder="Nombre completo del contratista">
+          </div>
+          <div class="field">
+            <label>Cédula del contratista <span class="req">*</span></label>
+            <input type="text" name="ff_contratista_cc" placeholder="Ej: 1.234.567.890">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Número de contrato <span class="req">*</span></label>
+            <input type="text" name="ff_numero_contrato" placeholder="Ej: 001-2026">
+          </div>
+          <div class="field">
+            <label>Duración en días <span class="req">*</span></label>
+            <input type="number" name="ff_duracion_dias" placeholder="Ej: 30" min="1">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Fecha de inicio <span class="req">*</span></label>
+            <input type="text" name="ff_fecha_inicio" placeholder="Ej: 1 de agosto de 2026">
+          </div>
+          <div class="field">
+            <label>Fecha de fin <span class="req">*</span></label>
+            <input type="text" name="ff_fecha_fin" placeholder="Ej: 31 de agosto de 2026">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Valor del contrato <span class="req">*</span></label>
+          <input type="text" name="ff_valor" placeholder="Ej: $5.000.000 (cinco millones de pesos)">
+        </div>
+
+        <div class="nota-contratista">
+          <strong>Contratista (fijo):</strong> Santiago Vélez Gracián · info@elgrupo.com.co
+        </div>
+
+      </div>
+    </div>
+
+    <!-- B4. Fecha de firma -->
+    <div class="card">
+      <div class="card-header"><span class="num">4</span> Fecha de Firma</div>
+      <div class="card-body">
+        <div class="row col-3">
+          <div class="field">
+            <label>Día <span class="req">*</span></label>
+            <input type="number" name="ff_firma_dia" placeholder="Ej: 1" min="1" max="31">
+          </div>
+          <div class="field">
+            <label>Mes <span class="req">*</span></label>
+            <select name="ff_firma_mes">
+              <option value="">— Seleccionar —</option>
+              <option>enero</option><option>febrero</option>
+              <option>marzo</option><option>abril</option>
+              <option>mayo</option><option>junio</option>
+              <option>julio</option><option>agosto</option>
+              <option>septiembre</option><option>octubre</option>
+              <option>noviembre</option><option>diciembre</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Año (2 dígitos) <span class="req">*</span></label>
+            <input type="text" name="ff_firma_anio" placeholder="Ej: 26" maxlength="2">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /seccion-freefan -->
+
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       SECCIÓN C — ACTA DE CIERRE
+       ══════════════════════════════════════════════════════════════ -->
+  <div class="form-section" id="seccion-acta">
+
+    <!-- C3. Datos del acta -->
+    <div class="card">
+      <div class="card-header"><span class="num">3</span> Datos del Acta de Cierre</div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:14px;">
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Nombre del contratista <span class="req">*</span></label>
+            <input type="text" name="ac_contratista_nombre" placeholder="Nombre completo del contratista">
+          </div>
+          <div class="field">
+            <label>Cédula del contratista <span class="req">*</span></label>
+            <input type="text" name="ac_contratista_cc" placeholder="Ej: 1.234.567.890">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Número del acta <span class="req">*</span></label>
+            <input type="text" name="ac_numero_acta" placeholder="Ej: 001-2026">
+          </div>
+          <div class="field">
+            <label>Fecha del acta <span class="req">*</span></label>
+            <input type="text" name="ac_fecha_actual" placeholder="Ej: 22 de julio de 2026">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Número del contrato Freefan <span class="req">*</span></label>
+            <input type="text" name="ac_numero_contrato" placeholder="Ej: 001-2026">
+          </div>
+          <div class="field">
+            <label>Fecha de inicio del contrato <span class="req">*</span></label>
+            <input type="text" name="ac_fecha_contrato" placeholder="Ej: 1 de agosto de 2026">
+          </div>
+        </div>
+
+        <div class="row col-2">
+          <div class="field">
+            <label>Fecha de finalización <span class="req">*</span></label>
+            <input type="text" name="ac_fecha_finalizacion" placeholder="Ej: 31 de agosto de 2026">
+          </div>
+          <div class="field">
+            <label>Valor del contrato <span class="req">*</span></label>
+            <input type="text" name="ac_valor" placeholder="Ej: $5.000.000 (cinco millones de pesos)">
+          </div>
+        </div>
+
+        <div class="nota-contratista">
+          <strong>Contratista (fijo):</strong> Santiago Vélez Gracián · info@elgrupo.com.co
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /seccion-acta -->
+
+
+  <!-- ══ Botón generar ══════════════════════════════════════════════ -->
+  <button type="submit" class="btn-generar" id="btn-generar" style="display:none;">
+    📄 Generar Documento Word
+  </button>
+
+  <div class="status" id="status-box"></div>
+
+</form>
+</div><!-- /container -->
+
+<script>
+  // ── Control de visibilidad por tipo ──────────────────────────────────
+  const tipoInputs = document.querySelectorAll('input[name="tipo"]');
+  const cardEmpresa = document.getElementById("card-empresa");
+  const seccionProveedor = document.getElementById("seccion-proveedor");
+  const seccionFreefan   = document.getElementById("seccion-freefan");
+  const seccionActa      = document.getElementById("seccion-acta");
+  const btnGenerar       = document.getElementById("btn-generar");
+
+  tipoInputs.forEach(input => {
+    input.addEventListener("change", function() {
+      const tipo = this.value;
+
+      // Mostrar empresa y botón
+      cardEmpresa.style.display = "block";
+      btnGenerar.style.display  = "block";
+
+      // Actualizar texto del botón
+      const labels = {
+        "proveedor":  "📄 Generar Contrato Proveedor",
+        "freefan":    "📄 Generar Contrato Freefan",
+        "acta_cierre":"📄 Generar Acta de Cierre",
+      };
+      btnGenerar.textContent = labels[tipo] || "📄 Generar Documento Word";
+
+      // Mostrar sección correspondiente
+      seccionProveedor.classList.toggle("visible", tipo === "proveedor");
+      seccionFreefan.classList.toggle("visible",   tipo === "freefan");
+      seccionActa.classList.toggle("visible",       tipo === "acta_cierre");
+    });
+  });
+
+  // ── Actividades dinámicas (Proveedor) ────────────────────────────────
+  function agregarActividad() {
+    const lista = document.getElementById("actividades-lista");
+    const n = lista.children.length + 1;
+    const fila = document.createElement("div");
+    fila.className = "actividad-fila";
+    fila.innerHTML = `
+      <input type="text" name="actividades" placeholder="Actividad o entregable ${n}">
+      <button type="button" class="btn-quitar" onclick="quitarActividad(this)">×</button>`;
+    lista.appendChild(fila);
+    fila.querySelector("input").focus();
+  }
+
+  function quitarActividad(btn) {
+    const lista = document.getElementById("actividades-lista");
+    if (lista.children.length <= 1) return;
+    btn.closest(".actividad-fila").remove();
+  }
+
+  // ── Envío del formulario ─────────────────────────────────────────────
+  document.getElementById("form-principal").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const btn    = document.getElementById("btn-generar");
+    const status = document.getElementById("status-box");
+
+    // Validar tipo
+    const tipoSeleccionado = document.querySelector('input[name="tipo"]:checked');
+    if (!tipoSeleccionado) {
+      status.className = "status error";
+      status.textContent = "⚠️  Selecciona el tipo de documento.";
+      return;
+    }
+
+    // Validar empresa
+    if (!document.querySelector('input[name="empresa"]:checked')) {
+      status.className = "status error";
+      status.textContent = "⚠️  Selecciona la razón social del contratista.";
+      return;
+    }
+
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Generando…";
+    status.className = "status loading";
+    status.textContent = "⏳  Generando el documento, un momento…";
+
+    try {
+      const resp = await fetch("/generar", {
+        method: "POST",
+        body: new FormData(this),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json();
+        throw new Error(err.error || "Error desconocido");
+      }
+
+      const blob = await resp.blob();
+      const cd   = resp.headers.get("Content-Disposition") || "";
+      const match = cd.match(/filename="?([^"]+)"?/);
+      const fname = match ? match[1] : "documento.docx";
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      status.className = "status success";
+      status.textContent = `✅  Documento generado: ${fname}`;
+
+    } catch (err) {
+      status.className = "status error";
+      status.textContent = `❌  ${err.message}`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  });
+</script>
+</body>
+</html>
